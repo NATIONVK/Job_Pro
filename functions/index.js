@@ -109,3 +109,56 @@ exports.nationvkTutor = onCall(
     }
   }
 );
+
+
+exports.generateQuestionDrafts = onCall(
+  { region: "us-central1", timeoutSeconds: 90, memory: "512MiB", secrets: [openAiApiKey] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+    if (request.auth.token.admin !== true) throw new HttpsError("permission-denied", "Question admin role required.");
+    const { subject, topic, count, language, difficulty } = request.data || {};
+    const n = Number(count);
+    if (typeof subject !== "string" || !subject.trim() || typeof topic !== "string" || !topic.trim() ||
+        !Number.isInteger(n) || n < 1 || n > 20 || !["en","bn","both"].includes(language) ||
+        !["Easy","Medium","Hard","Mixed"].includes(difficulty)) {
+      throw new HttpsError("invalid-argument", "Invalid question generation settings.");
+    }
+    const ref = admin.firestore().collection("_nationvkQuestionAiUsage").doc(request.auth.uid);
+    const day = new Date().toISOString().slice(0,10);
+    const allowed = await admin.firestore().runTransaction(async (tx) => {
+      const snap = await tx.get(ref), data = snap.data() || {};
+      const used = data.day === day ? Number(data.count || 0) : 0;
+      if (used >= 10) return false;
+      tx.set(ref,{day,count:used+1,updatedAt:admin.firestore.FieldValue.serverTimestamp()});
+      return true;
+    });
+    if (!allowed) throw new HttpsError("resource-exhausted", "Daily AI question generation limit is 10.");
+    const instructions = [
+      "Create original educational MCQ questions. Return ONLY valid JSON, no markdown.",
+      'JSON shape: {"questions":[{"question":"...","options":["A","B","C","D"],"correctIndex":0,"explanation":"...","difficulty":"Easy","language":"en"}]}',
+      "Each question must have exactly four distinct options and one correct answer. No duplicates. Do not invent uncertain facts.",
+      "All generated questions are drafts and must be reviewed by a human before publishing."
+    ].join(" ");
+    try {
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method:"POST",
+        headers:{"Authorization":`Bearer ${openAiApiKey.value()}`,"Content-Type":"application/json"},
+        body:JSON.stringify({model:MODEL,instructions,input:JSON.stringify({subject:subject.trim(),topic:topic.trim(),count:n,language,difficulty}),max_output_tokens:5000})
+      });
+      const payload = await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error("AI provider request failed.");
+      const raw = (payload.output || []).flatMap(x=>x.content||[]).filter(x=>x.type==="output_text").map(x=>x.text||"").join("\\n").trim();
+      const parsed = JSON.parse(raw.replace(/^```json\s*/i,"").replace(/\s*```$/,""));
+      if (!Array.isArray(parsed.questions) || parsed.questions.length < 1 || parsed.questions.length > n) throw new Error("Invalid AI response.");
+      const questions = parsed.questions.map(q=>{
+        if (!q || typeof q.question !== "string" || !Array.isArray(q.options) || q.options.length !== 4 ||
+            q.options.some(x=>typeof x!=="string" || !x.trim()) || !Number.isInteger(q.correctIndex) || q.correctIndex<0 || q.correctIndex>3) throw new Error("Invalid generated question.");
+        return {subject:subject.trim(),topic:topic.trim(),question:q.question.slice(0,1200),options:q.options.map(x=>x.slice(0,300)),correctIndex:q.correctIndex,explanation:String(q.explanation||"").slice(0,1200),difficulty:["Easy","Medium","Hard"].includes(q.difficulty)?q.difficulty:"Medium",language,published:false};
+      });
+      return {questions};
+    } catch (error) {
+      logger.error("Question generation failed",{uid:request.auth.uid});
+      throw new HttpsError("internal","AI did not return valid question data. Please retry.");
+    }
+  }
+);
