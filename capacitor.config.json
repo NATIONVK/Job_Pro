@@ -1,0 +1,9 @@
+{
+  "appId": "com.nationvk.learn",
+  "appName": "NATIONVK Learn",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
