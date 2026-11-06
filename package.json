@@ -1,0 +1,17 @@
+{
+  "name": "nationvk-learning-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bilingual offline-first learning platform",
+  "scripts": {
+    "build:web": "node scripts/prepare-web.mjs",
+    "build:android": "npm run build:web && cap add android && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
+}
