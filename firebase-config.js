@@ -1,17 +1,14 @@
-// Firebase Web App configuration.
-// These values identify your Firebase project; they are not admin credentials.
-// Replace every placeholder with values from Firebase Console > Project settings > Your apps.
+// Firebase Web App configuration for NATIONVK Job_Pro.
+// These client-side identifiers are not admin credentials or private API secrets.
+// Restrict the API key to the required Firebase APIs and authorized app domains.
 export const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_WEB_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID"
+  apiKey: "AIzaSyBJwrNMT8CmUE3SQ-Er3EnH3f5d0RFRcTo",
+  authDomain: "job-pro-f81d8.firebaseapp.com",
+  projectId: "job-pro-f81d8",
+  storageBucket: "job-pro-f81d8.firebasestorage.app",
+  messagingSenderId: "755664939434",
+  appId: "1:755664939434:web:81bef277ed909e7df2e3d3",
+  measurementId: "G-P1SETF36X4"
 };
 
-export const firebaseConfigured = Object.values(firebaseConfig).every(
-  value => typeof value === "string" &&
-    value.length > 0 &&
-    !value.startsWith("YOUR_")
-);
+export const firebaseConfigured = true;
