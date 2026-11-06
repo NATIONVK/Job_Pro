@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, updateProfile,
@@ -134,7 +134,7 @@ function start() {
   ui();
   if (!firebaseConfigured) { renderAuth(); return; }
   try {
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
     setPersistence(auth, browserLocalPersistence).catch(console.error);
     try {
