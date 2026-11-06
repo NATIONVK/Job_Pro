@@ -38,7 +38,7 @@ const ui = () => {
       <label for="fbEmail" id="fbEmailLabel"></label>
       <input class="field" id="fbEmail" type="email" autocomplete="email" required>
       <label for="fbPassword" id="fbPasswordLabel"></label>
-      <input class="field" id="fbPassword" type="password" minlength="6" autocomplete="current-password" required>
+      <input class="field" id="fbPassword" type="password" minlength="6" autocomplete="new-password" required>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="primary" type="submit" id="fbSignIn"></button>
         <button class="secondary" type="button" id="fbSignUp"></button>
@@ -57,9 +57,12 @@ const ui = () => {
   });
   document.getElementById("fbSignUp").addEventListener("click", async () => {
     if (!auth) return;
-    setStatus(words().syncing);
+    const email = value("fbEmail"), password = document.getElementById("fbPassword").value;
+    if (!email || !document.getElementById("fbEmail").checkValidity()) { setStatus("সঠিক ইমেইল ঠিকানা দাও।", true); return; }
+    if (password.length < 6) { setStatus("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।", true); return; }
+    setStatus("Account তৈরি হচ্ছে…");
     try {
-      const credential = await createUserWithEmailAndPassword(auth, value("fbEmail"), value("fbPassword"));
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: value("fbEmail").split("@")[0] });
     } catch (error) { setStatus(authMessage(error), true); }
   });
@@ -76,7 +79,18 @@ const setStatus = (message, error=false) => {
 };
 const authMessage = error => {
   const known = ["auth/invalid-email","auth/weak-password","auth/email-already-in-use","auth/invalid-credential","auth/network-request-failed"];
-  return known.includes(error?.code) ? error.message : words().authError;
+  const messages = {
+    "auth/invalid-email":"ইমেইল ঠিকানাটি সঠিক নয়।",
+    "auth/weak-password":"পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।",
+    "auth/email-already-in-use":"এই ইমেইলে আগে থেকেই Account আছে। Sign in করো।",
+    "auth/invalid-credential":"ইমেইল/পাসওয়ার্ড মেলেনি, অথবা Firebase Auth সেটিংস/API key-এ সমস্যা আছে। Register করার সময়ও এলে Email/Password provider চালু আছে কি না দেখো।",
+    "auth/network-request-failed":"ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করো।",
+    "auth/operation-not-allowed":"Firebase Console > Authentication > Sign-in method-এ Email/Password চালু করো।",
+    "auth/unauthorized-domain":"Authentication > Settings > Authorized domains-এ এই domain যোগ করো।",
+    "auth/too-many-requests":"অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করো।"
+  };
+  const message = messages[error?.code] || error?.message || words().authError;
+  return message + (error?.code ? " ["+error.code+"]" : "");
 };
 const renderAuth = () => {
   if (!document.getElementById("firebasePanel")) return;
