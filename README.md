@@ -11,6 +11,8 @@ Bilingual (Bangla + English), offline-first learning and exam-preparation app wi
 - Bangla/English toggle and dark/light theme
 - Local-first storage and PWA offline cache
 - Firebase Email/Password authentication integration
+- NATIONVK AI tutor through a secure Firebase callable Cloud Function (OpenAI API)
+- Per-user AI chat history synced to private Firestore data
 - Firestore storage for a learner's progress, tasks and bookmarks
 - Capacitor Android wrapper and GitHub Actions debug APK artifact
 
@@ -26,6 +28,20 @@ Bilingual (Bangla + English), offline-first learning and exam-preparation app wi
 
 Firebase web config values are client identifiers, not admin credentials. Never put service-account JSON or private server keys in this repository. Firestore rules restrict each signed-in user to their own private learning document.
 
+## NATIONVK AI setup
+
+The app includes an AI tutor UI and a secure callable Cloud Function. The OpenAI API key is stored as a Firebase Secret and is never shipped in the web app or APK.
+
+1. Use a Firebase project with the Blaze (pay-as-you-go) plan; Cloud Functions deployment and AI API calls may incur charges.
+2. Install the Firebase CLI and sign in: `npm install -g firebase-tools` then `firebase login`.
+3. Select your Firebase project in this repository: `firebase use YOUR_PROJECT_ID`.
+4. Set the server-side secret: `firebase functions:secrets:set OPENAI_API_KEY` and paste your OpenAI API key into the secure CLI prompt. Never commit this key or put it in `firebase-config.js`.
+5. Deploy the function and Firestore rules: `firebase deploy --only functions,firestore:rules`.
+6. Rebuild the Android APK from GitHub Actions after the web changes are pushed.
+
+The AI tutor requires a signed-in Firebase user. Chat history is stored at `users/{uid}/private/aiChat`, protected by the existing owner-only Firestore rule. Each request is limited to 16 messages and 4,000 characters per message. Add App Check and stronger usage controls before a public launch.
+
+**Important:** NATIONVK AI uses the OpenAI API with separate API billing. It does not connect to or use a ChatGPT subscription/session.
 ## Run locally
 
 Serve the repository over localhost or HTTPS (service workers do not work from ordinary file:// pages). The app can also be installed as a PWA from a supported browser.
@@ -44,7 +60,7 @@ This is a debug APK for testing. A distributable/release APK requires Android si
 
 - Firebase is integrated but remains inactive until firebase-config.js is populated and Firebase Console setup is completed.
 - Cloud sync currently covers progress, study tasks and bookmarks. Conflict resolution and robust multi-device merge policies are future work.
-- Teacher/admin roles, course authoring, live classes, video hosting and AI tutor are not implemented yet.
+- Teacher/admin roles, course authoring, live classes and video hosting are not implemented yet. AI tutor deployment still requires Firebase Secret setup and Cloud Functions deployment.
 - GitHub Actions builds a debug APK; it does not publish to Google Play.
 
 ## Project identity
