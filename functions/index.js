@@ -20,6 +20,25 @@ exports.nationvkTutor = onCall(
       throw new HttpsError("unauthenticated", "Sign in to use NATIONVK AI.");
     }
 
+    const uid = request.auth.uid;
+    const dayKey = new Date().toISOString().slice(0, 10);
+    const usageRef = admin.firestore().collection("_nationvkAiUsage").doc(uid);
+    const allowed = await admin.firestore().runTransaction(async (transaction) => {
+      const usageSnapshot = await transaction.get(usageRef);
+      const usage = usageSnapshot.data() || {};
+      const count = usage.day === dayKey ? Number(usage.count || 0) : 0;
+      if (count >= 25) return false;
+      transaction.set(usageRef, {
+        day: dayKey,
+        count: count + 1,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return true;
+    });
+    if (!allowed) {
+      throw new HttpsError("resource-exhausted", "Daily NATIONVK AI limit reached. Try again tomorrow.");
+    }
+
     const incoming = request.data?.messages;
     if (!Array.isArray(incoming) || incoming.length < 1 || incoming.length > 16) {
       throw new HttpsError("invalid-argument", "Send between 1 and 16 chat messages.");
