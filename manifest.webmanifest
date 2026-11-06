@@ -1,0 +1,11 @@
+{
+  "name": "NATIONVK Learning Platform",
+  "short_name": "NATIONVK Learn",
+  "description": "Bilingual online and offline learning and exam practice",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#101827",
+  "orientation": "portrait",
+  "icons": []
+}
