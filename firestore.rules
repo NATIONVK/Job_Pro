@@ -1,11 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // A signed-in learner can read/write only their own private learning data.
-    match /users/{userId}/private/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.admin == true; }
+
+    // Students can read published MCQs; only trusted admins can manage the bank.
+    match /questions/{questionId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.published == true);
+      allow create, update, delete: if isAdmin();
     }
-    // All other documents are denied unless an explicit rule is added.
+
+    // A learner can access only their own private learning data.
+    match /users/{userId}/private/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+    // Exam results are immutable after creation and private to their owner.
+    match /users/{userId}/examResults/{resultId} {
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow update, delete: if false;
+    }
+
+    // Deny every other client-side read/write, including internal usage counters.
     match /{document=**} {
       allow read, write: if false;
     }
