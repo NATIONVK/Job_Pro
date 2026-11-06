@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // A signed-in learner can read/write only their own private learning data.
+    match /users/{userId}/private/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // All other documents are denied unless an explicit rule is added.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
