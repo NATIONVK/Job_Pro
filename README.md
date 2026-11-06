@@ -1,29 +1,52 @@
 # NATIONVK Learning Platform
 
-A bilingual (Bangla + English) learning and exam-preparation platform, designed as an installable offline-first PWA with an Android packaging path.
+Bilingual (Bangla + English), offline-first learning and exam-preparation app with a web/PWA frontend and an automated Android debug APK pipeline.
 
-## Current starter
+## Features currently in the starter
 
-- Student dashboard and subject/course discovery
+- Student dashboard and subject discovery
 - MCQ practice with instant feedback and explanations
-- Timed mock-test mode and local result history
-- Study planner, bookmarks, and progress tracking
-- Bangla/English interface toggle
-- Dark/light theme
-- Offline caching and local-first data persistence
+- Timed mock exam and local result history
+- Study planner, bookmarks, progress tracking
+- Bangla/English toggle and dark/light theme
+- Local-first storage and PWA offline cache
+- Firebase Email/Password authentication integration
+- Firestore storage for a learner's progress, tasks and bookmarks
+- Capacitor Android wrapper and GitHub Actions debug APK artifact
+
+## Firebase setup (required to activate cloud services)
+
+1. Create a Firebase project at https://console.firebase.google.com/.
+2. Add a Web App in Project settings.
+3. Copy its web configuration into firebase-config.js, replacing every YOUR_* placeholder.
+4. In Firebase Authentication, enable the Email/Password provider.
+5. Create a Cloud Firestore database.
+6. Publish the rules from firestore.rules in Firestore Rules.
+7. In Authentication > Settings > Authorized domains, add the domain used to host the web app (for example, your GitHub Pages domain).
+
+Firebase web config values are client identifiers, not admin credentials. Never put service-account JSON or private server keys in this repository. Firestore rules restrict each signed-in user to their own private learning document.
 
 ## Run locally
 
-Open `index.html` in a modern browser, or serve the repository with any static web server. For reliable service-worker support, use HTTPS or localhost.
+Serve the repository over localhost or HTTPS (service workers do not work from ordinary file:// pages). The app can also be installed as a PWA from a supported browser.
 
-## Android APK
+## Android APK from GitHub Actions
 
-The starter is a PWA. It can be packaged as an Android app using Capacitor after installing Node.js and Android Studio. See `ANDROID_BUILD.md` for the planned workflow.
+Every push to main runs Build Android APK. The workflow installs Capacitor, generates the Android project, builds a debug APK and uploads it as the artifact nationvk-learning-debug-apk.
 
-## Important
+To download it: open the repository's Actions tab > select the latest Build Android APK run > scroll to Artifacts > download nationvk-learning-debug-apk.
 
-This is the initial frontend foundation. Cloud authentication, teacher/admin permissions, remote database sync, video hosting, and AI services require backend configuration and credentials; no secret keys are stored in this repository.
+Manual run: Actions > Build Android APK > Run workflow.
 
-## Branding
+This is a debug APK for testing. A distributable/release APK requires Android signing configuration; keep signing keys and passwords in GitHub Actions Secrets, never in source control.
 
-NATIONVK | Learning without limits.
+## Current limitations
+
+- Firebase is integrated but remains inactive until firebase-config.js is populated and Firebase Console setup is completed.
+- Cloud sync currently covers progress, study tasks and bookmarks. Conflict resolution and robust multi-device merge policies are future work.
+- Teacher/admin roles, course authoring, live classes, video hosting and AI tutor are not implemented yet.
+- GitHub Actions builds a debug APK; it does not publish to Google Play.
+
+## Project identity
+
+**NATIONVK** — Learning without limits.
